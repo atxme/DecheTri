@@ -15,64 +15,57 @@
 ||---------------------------------------------------------------------------------------------||
 */
 
-
-
-#ifndef __include_termios.h__
-#define __include_termios.h__
 #include <termios.h>
-#endif
+#include <unistd.h>
+#include <fcntl.h>
 
-#include"communication.hpp"
+#include "communication.hpp"
 
-namespace communication;
+namespace communication {
+    int config;
+    TransfertDataToArduino::TransfertDataToArduino() {}
 
-{
-    arduino::TransfertDataToArduino(){}
-
-    arduino::~TransfertDataToArduino(){
+    TransfertDataToArduino::~TransfertDataToArduino() {
         close();
     }
 
-
-    void TransfertDataToArduino::init(){
-        fd=open(connectionPort.c_str(),O_RDWR | O_NOCTTY);
-        if(fd==-1){
-            cout<<"Error opening port"<<endl;  //error opening port
+    void TransfertDataToArduino::init() {
+        fd = open(connectionPort.c_str(), O_RDWR | O_NOCTTY);
+        if (fd == -1) {
+            cout << "Error opening port" << endl; //error opening port
             return;
         }
 
-        if(tcgetattr(fd,&config)<0){
-            cout<<"Error getting config"<<endl;  //error getting config
+        if (tcgetattr(fd, &configuration) < 0) {
+            cout << "Error getting config" << endl; //error getting config
             return;
         }
-        
-        tcgettattr(fd,&config);
-        config.c_iflag &=config.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
-        config.c_oflag &= ~OPOST;
-        config.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-        config.c_cflag &= ~(CSIZE | PARENB);
-        config.c_cflag |= CS8;
-        cfsetispeed(&config, baudRate);
-        cfsetospeed(&config, baudRate);
-        tcsetattr(fd, TCSANOW, &config);
-        }
+
+        tcgetattr(fd, &configuration);
+        configuration.c_iflag &= configuration.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+        configuration.c_oflag &= ~OPOST;
+        configuration.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+        configuration.c_cflag &= ~(CSIZE | PARENB);
+        configuration.c_cflag |= CS8;
+        cfsetispeed(&configuration, baudRate);
+        cfsetospeed(&configuration, baudRate);
+        tcsetattr(fd, TCSANOW, &configuration);
     }
 
-    void TransfertDataToArduino::send(string message){
-
-        if (fd==-1){
+    void TransfertDataToArduino::send(string message) {
+        if (fd == -1) {
             cerr << "Error: port is not open" << endl;
             return;
         }
-        write(fd,message.c_str(),message.size());
+        const char *buf = message.c_str();
+        size_t count = message.size();
+        write(fd, buf, count);
     }
 
-
-    void TransfertDataToArduino::close(){
-        if(fd!=-1){
-            close(fd);
-            fd=-1;
+    void TransfertDataToArduino::close() {
+        if (fd != -1) {
+            ::close(fd);
+            fd = -1;
         }
     }
 }
-

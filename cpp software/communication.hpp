@@ -16,7 +16,6 @@
 ||---------------------------------------------------------------------------------------------||
 ||---------------------------------------------------------------------------------------------||
 */
-
 #ifndef __include_termios_h__
 #define __include_termios_h__
 #include <termios.h>
@@ -41,24 +40,23 @@ using namespace std;
 
 namespace communication
 {
-struct termios config ;
-{
+    extern int config;
+    struct termios configuration;
+
     class TransfertDataToArduino
     {
     private:
-
         string message;
         string connectionPort="/dev/ttyUSB0";
         int baudRate=9600;
         int fd= -1;
 
     public:
-        Communication();
-        ~Communication();
+        TransfertDataToArduino();
+        ~TransfertDataToArduino();
         void init();
         void send(string message);
         void close();
     };
 }
 
-}
