@@ -44,7 +44,7 @@ int main(int argc , char ** argv ){
     cuda::GpuMat frame,resizedFrame;
     cuda::VideoCapture cap(0,cuda::VIDEO_CAPTURE_CUDA); // open the default camera   you must change the port addapting to your hardware configuration 
 
-    if cap.isOpened() {
+    if (!cap.isOpened()) {
         cout << "Cannot open the video cam" << endl;
         cout << "try to change the video port for the camera" << endl;
         return -1;
@@ -64,7 +64,7 @@ int main(int argc , char ** argv ){
 
     while true {
 
-        if(!cap.read(frame)) {
+        if(!cap.read(frame)) { //check if the frame is correctly read
             cout << "Cannot read a frame from video stream" << endl;
             break;
         }
