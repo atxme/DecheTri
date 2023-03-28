@@ -39,9 +39,9 @@
 
 using namespace std;
 
-struct termios config :
-
 namespace communication
+{
+struct termios config ;
 {
     class TransfertDataToArduino
     {
@@ -50,6 +50,7 @@ namespace communication
         string message;
         string connectionPort="/dev/ttyUSB0";
         int baudRate=9600;
+        int fd= -1;
 
     public:
         Communication();
@@ -60,3 +61,4 @@ namespace communication
     };
 }
 
+}
