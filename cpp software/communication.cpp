@@ -22,7 +22,10 @@
 #include "communication.hpp"
 
 namespace communication {
+
     int config;
+    struct termios configuration;
+
     TransfertDataToArduino::TransfertDataToArduino() {}
 
     TransfertDataToArduino::~TransfertDataToArduino() {
@@ -32,12 +35,12 @@ namespace communication {
     void TransfertDataToArduino::init() {
         fd = open(connectionPort.c_str(), O_RDWR | O_NOCTTY);
         if (fd == -1) {
-            cout << "Error opening port" << endl; //error opening port
+            std::cout << "Error opening port" << std::endl;
             return;
         }
 
         if (tcgetattr(fd, &configuration) < 0) {
-            cout << "Error getting config" << endl; //error getting config
+            std::cout << "Error getting config" << std::endl;
             return;
         }
 
@@ -52,9 +55,9 @@ namespace communication {
         tcsetattr(fd, TCSANOW, &configuration);
     }
 
-    void TransfertDataToArduino::send(string message) {
+    void TransfertDataToArduino::send(std::string message) {
         if (fd == -1) {
-            cerr << "Error: port is not open" << endl;
+            std::cerr << "Error: port is not open" << std::endl;
             return;
         }
         const char *buf = message.c_str();
@@ -69,3 +72,4 @@ namespace communication {
         }
     }
 }
+

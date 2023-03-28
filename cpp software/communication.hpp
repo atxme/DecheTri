@@ -38,25 +38,31 @@
 
 using namespace std;
 
-namespace communication
-{
-    extern int config;
-    struct termios configuration;
+#ifndef COMMUNICATION_HPP
+#define COMMUNICATION_HPP
 
-    class TransfertDataToArduino
-    {
+
+namespace communication {
+
+    extern int config;
+    extern struct termios configuration;
+
+    class TransfertDataToArduino {
     private:
-        string message;
-        string connectionPort="/dev/ttyUSB0";
-        int baudRate=9600;
-        int fd= -1;
+        std::string message;
+        std::string connectionPort = "/dev/ttyUSB0";
+        int baudRate = 9600;
+        int fd = -1;
 
     public:
         TransfertDataToArduino();
         ~TransfertDataToArduino();
         void init();
-        void send(string message);
+        void send(std::string message);
         void close();
     };
 }
+
+#endif /* COMMUNICATION_HPP */
+
 
