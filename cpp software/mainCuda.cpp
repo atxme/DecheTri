@@ -57,11 +57,12 @@ int main(int argc , char ** argv ){
     }
 
     communication::TransfertDataToArduino communication; // create a object of the class DataFromArduino
-    communication.init();  //init the communication with the arduino card
+    //communication.init();  //init the communication with the arduino card
 
-    cuda::GpuMat frame,resizedFrame;
-    VideoCapture cap;
-    
+    Mat cpuFrame;
+    VideoCapture cap (0); // open the video port 0
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 224);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 224);
 
     if (!cap.isOpened()) {
         cout << "Cannot open the video cam" << endl;
@@ -71,28 +72,59 @@ int main(int argc , char ** argv ){
 
     while (true) {
 
-        if(!cap.read(frame)) { //check if the frame is correctly read
+        cap.read(cpuFrame); // read a new frame from video
+        //imshow("frame",frame); // show the frame
+
+        if(!cap.read(cpuFrame)) { //check if the frame is correctly read
             cout << "Cannot read a frame from video stream" << endl;
             break;
         }
 
-        cuda::resize(frame,resizedFrame,cv::Size(225,225),0,0,INTER_LINEAR); // resize the frame to 225x225
+        if (cpuFrame.empty()){
+            cout << "empty frame" << endl;
+            break;
+        }
+
+        cuda::GpuMat frame,resizedFrame;
+        frame.upload(cpuFrame); // upload the frame to the gpu
+
+        if (frame.empty()){
+            cout << "empty gpu frame" << endl;
+            break;
+        }
+        cuda::resize(frame,resizedFrame,cv::Size(224,224),0,0,INTER_LINEAR); // resize the frame to 225x225
         cuda::cvtColor(resizedFrame,resizedFrame,COLOR_BGR2RGB); // convert the frame to RGB
-        cv::cuda::divide(resizedFrame, cv::Scalar(255.0), resizedFrame, 1, -1, cv::cuda::Stream::Null());
+        cv::cuda::divide(resizedFrame, cv::Scalar(255.0), resizedFrame, 1, -1,cuda::Stream::Null());
         resizedFrame.convertTo(resizedFrame, CV_32F, 1.0 / 255.0);  // convert the frame to float from 0-255 to 0-1
         
-        net.setInput(resizedFrame); // set the input of the model
-        Mat result = net.forward(); // forward the frame to the model
+        cuda::GpuMat result_gpu;
+
+        cuda::GpuMat gpuFrame;
         
-        float result1= result.at<float>(0,0); // get the result of the first class
-        float result2= result.at<float>(0,1); // get the result of the second class
+        Mat cpuFrame;
+        gpuFrame.download(cpuFrame); // télécharger l'image dans cpuFrame
+        
+    
+        Mat blob;
+        blob = cv::dnn::blobFromImage(cpuFrame, 1.0, cv::Size(224, 224), cv::Scalar(0, 0, 0), true, false);
+
+        // Passer le blob au réseau de neurones
+        net.setInput(blob);
+
+        net.forward(blob); // forward the frame to the model
+
+        imshow("Nom de la fenêtre", blob); // afficher l'image avec imshow()
+        cv::Mat result;
+
+        float result1 = result.at<float>(0,0); // get the result of the first class
+        float result2 = result.at<float>(0,1); // get the result of the second class
 
         if (result1<result2){
-            communication.send(classification[1]); // send the result to the arduino card
+            //communication.send(classification[1]); // send the result to the arduino card
             cout << classification[1] <<" have been detected "<<endl; // print the result on the terminal
         }
         else {
-            communication.send(classification[0]); // send the result to the arduino card
+            //communication.send(classification[0]); // send the result to the arduino card
             cout << classification[0] <<" have been detected "<<endl; // print the result on the terminal
         }
 
@@ -101,8 +133,10 @@ int main(int argc , char ** argv ){
             cout << "The program is going to stop" << endl;
             break; // break the loop
         }
-    }
+        waitKey(0);
+    }   
     cv::destroyAllWindows(); // destroy all the windows
     cap.release(); // release the camera
     communication.close(); // close the communication with the arduino card
+    return 0;
 }
