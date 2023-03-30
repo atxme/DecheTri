@@ -59,10 +59,10 @@ int main(int argc , char ** argv ){
     communication::TransfertDataToArduino communication; // create a object of the class DataFromArduino
     //communication.init();  //init the communication with the arduino card
 
-    Mat cpuFrame;
+    
     VideoCapture cap (0); // open the video port 0
-    cap.set(cv::CAP_PROP_FRAME_WIDTH, 224);
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 224);
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
 
     if (!cap.isOpened()) {
         cout << "Cannot open the video cam" << endl;
@@ -70,10 +70,13 @@ int main(int argc , char ** argv ){
         return -1;
     }
 
-    while (true) {
+    Mat cpuFrame;
 
-        cap.read(cpuFrame); // read a new frame from video
-        //imshow("frame",frame); // show the frame
+    while (true) {
+        
+        cap>>cpuFrame; // read a new frame from video
+        imshow("frame",cpuFrame); // show the frame
+        
 
         if(!cap.read(cpuFrame)) { //check if the frame is correctly read
             cout << "Cannot read a frame from video stream" << endl;
@@ -85,25 +88,32 @@ int main(int argc , char ** argv ){
             break;
         }
 
-        cuda::GpuMat frame,resizedFrame;
-        frame.upload(cpuFrame); // upload the frame to the gpu
+        cuda::Stream stream;
+        cuda::GpuMat frame(cpuFrame.size(), CV_8UC3);
+        cuda::GpuMat resizedFrame (224,224,CV_8UC3);
+
+        frame.upload(cpuFrame,stream); // upload the frame to the gpu
+        stream.waitForCompletion();
 
         if (frame.empty()){
             cout << "empty gpu frame" << endl;
             break;
         }
-        cuda::resize(frame,resizedFrame,cv::Size(224,224),0,0,INTER_LINEAR); // resize the frame to 225x225
+
+        cuda::resize(frame,resizedFrame,cv::Size(224,224),0,0,INTER_LINEAR,cuda::Stream::Null()); // resize the frame to 225x225
         cuda::cvtColor(resizedFrame,resizedFrame,COLOR_BGR2RGB); // convert the frame to RGB
         cv::cuda::divide(resizedFrame, cv::Scalar(255.0), resizedFrame, 1, -1,cuda::Stream::Null());
-        resizedFrame.convertTo(resizedFrame, CV_32F, 1.0 / 255.0);  // convert the frame to float from 0-255 to 0-1
-        
+
+        stream.waitForCompletion();
+
         cuda::GpuMat result_gpu;
 
-        cuda::GpuMat gpuFrame;
-        
+        cuda::GpuMat gpuFrame(resizedFrame.size(), CV_32FC3, Scalar(0, 0, 0));
+        resizedFrame.convertTo(gpuFrame, CV_32FC3, 1.0 / 255.0);
+
         Mat cpuFrame;
         gpuFrame.download(cpuFrame); // télécharger l'image dans cpuFrame
-        
+
     
         Mat blob;
         blob = cv::dnn::blobFromImage(cpuFrame, 1.0, cv::Size(224, 224), cv::Scalar(0, 0, 0), true, false);
@@ -111,10 +121,14 @@ int main(int argc , char ** argv ){
         // Passer le blob au réseau de neurones
         net.setInput(blob);
 
-        net.forward(blob); // forward the frame to the model
-
-        imshow("Nom de la fenêtre", blob); // afficher l'image avec imshow()
         cv::Mat result;
+
+        net.forward(result); // forward the frame to the model
+
+        //imshow("Nom de la fenêtre", blob); // afficher l'image avec imshow()
+        
+
+        cout<<"les resultats"<<result<<endl;
 
         float result1 = result.at<float>(0,0); // get the result of the first class
         float result2 = result.at<float>(0,1); // get the result of the second class
@@ -128,12 +142,15 @@ int main(int argc , char ** argv ){
             cout << classification[0] <<" have been detected "<<endl; // print the result on the terminal
         }
 
-        char key= waitKey(); // wait for a key to be pressed
+        
+        char key= waitKey(1); // wait for a key to be pressed
         if (key=='q') { // if the key is the escape key
             cout << "The program is going to stop" << endl;
             break; // break the loop
         }
-        waitKey(0);
+        
+        
+        
     }   
     cv::destroyAllWindows(); // destroy all the windows
     cap.release(); // release the camera
