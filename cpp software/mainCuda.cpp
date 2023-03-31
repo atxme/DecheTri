@@ -57,7 +57,7 @@ int main(int argc , char ** argv ){
     }
 
     communication::TransfertDataToArduino communication; // create a object of the class DataFromArduino
-    //communication.init();  //init the communication with the arduino card
+    communication.init();  //init the communication with the arduino card
 
     
     VideoCapture cap (0); // open the video port 0
@@ -125,20 +125,17 @@ int main(int argc , char ** argv ){
 
         net.forward(result); // forward the frame to the model
 
-        //imshow("Nom de la fenêtre", blob); // afficher l'image avec imshow()
-        
-
         cout<<"les resultats"<<result<<endl;
 
         float result1 = result.at<float>(0,0); // get the result of the first class
         float result2 = result.at<float>(0,1); // get the result of the second class
 
         if (result1<result2){
-            //communication.send(classification[1]); // send the result to the arduino card
+            communication.send(classification[1]); // send the result to the arduino card
             cout << classification[1] <<" have been detected "<<endl; // print the result on the terminal
         }
         else {
-            //communication.send(classification[0]); // send the result to the arduino card
+            communication.send(classification[0]); // send the result to the arduino card
             cout << classification[0] <<" have been detected "<<endl; // print the result on the terminal
         }
 
