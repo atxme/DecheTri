@@ -9,12 +9,12 @@ import time
 
 class_names=["can","plastic"]
 
-cv.cuda.setDevice(2)  #set gpu to use device 
+cv.cuda.setDevice(0)  #set gpu to use device 
 
 #check if file exist 
-check=os.path.exists("/home/christophe/Documents/code/projet dechet/torchNet_test4.onnx")
+check=os.path.exists("/home/christophe/Documents/ESEO/DecheTri/torchNet_test4.onnx")
 if check==True:
-    model_path=str("/home/christophe/Documents/code/projet dechet/torchNet_test4.onnx")
+    model_path=str("/home/christophe/Documents/ESEO/DecheTri/torchNet_test4.onnx")
 else :
     sys.exit(0)
 
@@ -24,15 +24,19 @@ def data_transfert(data):
     ser.close()
 
 def main():
+    print("here")
     #read onnx model 
     model = cv.dnn.readNetFromONNX(model_path)
     model.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
     model.setPreferableTarget(cv.dnn.DNN_TARGET_CUDA)
     
-    cap=cv.VideoCapture(2)
+    cap=cv.VideoCapture(0)
     if not cap.isOpened():
         print("Camera error")
+
+    
     else:
+        print("Camera is opened")
         while True:
             ret, frame = cap.read()
             
@@ -52,7 +56,7 @@ def main():
             class_idx = np.argmax(outputs)
             print("la classe est :",class_names[class_idx])
             print(outputs)
-            data_transfert(class_idx)
+            #data_transfert(class_idx)
             
             final_frame=gpu_frame.download()
             cv.imshow('frame', final_frame)
@@ -62,7 +66,8 @@ def main():
         
         cap.release()
         cv.destroyAllWindows()
-        
+
+
 main()
 
    
