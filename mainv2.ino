@@ -36,17 +36,14 @@ void setup() {
 }
 
 void loop() {
-  while (!Serial.available()){
-    if(getDistance() < distanceDetection){
-      Serial.println(0); //Lire cette valeur sur le pc pour actionner la camera et l'ia
+  while (!Serial.available());
+  if(getDistance() < distanceDetection){
+    classification = Serial.readString().toInt();
+    if(servoAngles[classification] != currentAngle){
+      servo.write(servoAngles[classification]);
     }
-  };
-  classification = Serial.readString().toInt();
-  Serial.println(classification);
-  if(servoAngles[classification] != currentAngle){
-    servo.write(servoAngles[classification]);
+    stepper.step(stepperSteps[classification]);
   }
-  stepper.step(stepperSteps[classification]);
 }
 
 int getDistance(){
