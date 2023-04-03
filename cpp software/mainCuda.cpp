@@ -131,11 +131,11 @@ int main(int argc , char ** argv ){
         float result2 = result.at<float>(0,1); // get the result of the second class
 
         if (result1<result2){
-            communication.send(classification[1]); // send the result to the arduino card
+            communication.send("1"); // send the result to the arduino card
             cout << classification[1] <<" have been detected "<<endl; // print the result on the terminal
         }
         else {
-            communication.send(classification[0]); // send the result to the arduino card
+            communication.send("0"); // send the result to the arduino card
             cout << classification[0] <<" have been detected "<<endl; // print the result on the terminal
         }
 
