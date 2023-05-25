@@ -23,7 +23,7 @@ learning_rate = 0.001
 #num_epochs = 10
 num_epochs=7
 
-data_path = "/home/christophe/Documents/dataset final"
+data_path = "dataset"
 
 # Définition des transformations à appliquer aux images
 train_transform = transforms.Compose([
@@ -110,7 +110,7 @@ def main():
     # Export du modèle en format ONNX
     model.eval()
     example_input = torch.rand(1, 3, 224, 224).to(device)
-    output_path = '/home/christophe/Documents/code/projet dechet/torchNet_test4.onnx'
+    output_path = 'torchNet_test5.onnx'
     torch.onnx.export(model, example_input, output_path)
     print('Model saved to %s' % output_path)
 
